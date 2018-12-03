@@ -18,6 +18,9 @@
 */
 /**************************************************************************/
 
+#ifndef RECLAIMERLABS_ADS1X15_H
+#define RECLAIMERLABS_ADS1X15_H
+
 #if ARDUINO >= 100
  #include "Arduino.h"
 #else
@@ -29,7 +32,10 @@
 /*=========================================================================
     I2C ADDRESS/BITS
     -----------------------------------------------------------------------*/
-    #define ADS1015_ADDRESS                 (0x48)    // 1001 000 (ADDR = GND)
+    #define ADS1015_ADDRESS_GND             (0x48)    // 1001 000 (ADDR = GND)
+    #define ADS1015_ADDRESS_VDD             (0x49)    // 1001 001 (ADDR = VDD)
+    #define ADS1015_ADDRESS_SDA             (0x4A)    // 1001 010 (ADDR = SDA)
+    #define ADS1015_ADDRESS_SCL             (0x4B)    // 1001 011 (ADDR = SCL)
 /*=========================================================================*/
 
 /*=========================================================================
@@ -105,6 +111,13 @@
     #define ADS1015_REG_CONFIG_CQUE_2CONV   (0x0001)  // Assert ALERT/RDY after two conversions
     #define ADS1015_REG_CONFIG_CQUE_4CONV   (0x0002)  // Assert ALERT/RDY after four conversions
     #define ADS1015_REG_CONFIG_CQUE_NONE    (0x0003)  // Disable the comparator and put ALERT/RDY in high state (default)
+
+    #define ADS1118_CONST_6_144V_LSB_mV  (0.1875)
+    #define ADS1118_CONST_4_096V_LSB_mV  (0.125)
+    #define ADS1118_CONST_2_048V_LSB_mV  (0.0625)
+    #define ADS1118_CONST_1_024V_LSB_mV  (0.03125)
+    #define ADS1118_CONST_0_512V_LSB_mV  (0.015625)
+    #define ADS1118_CONST_0_256V_LSB_mV  (0.0078125)
 /*=========================================================================*/
 
 typedef enum
@@ -117,7 +130,7 @@ typedef enum
   GAIN_SIXTEEN      = ADS1015_REG_CONFIG_PGA_0_256V
 } adsGain_t;
 
-class Adafruit_ADS1015
+class ReclaimerLabs_ADS1015
 {
 protected:
    // Instance-specific properties
@@ -127,11 +140,13 @@ protected:
    adsGain_t m_gain;
 
  public:
-  Adafruit_ADS1015(uint8_t i2cAddress = ADS1015_ADDRESS);
+  ReclaimerLabs_ADS1015(uint8_t i2cAddress = ADS1015_ADDRESS_GND);
   void begin(void);
   uint16_t  readADC_SingleEnded(uint8_t channel);
   int16_t   readADC_Differential_0_1(void);
   int16_t   readADC_Differential_2_3(void);
+  double    readADC_Diff_0_1_mV();
+  double    readADC_Diff_2_3_mV();
   void      startComparator_SingleEnded(uint8_t channel, int16_t threshold);
   int16_t   getLastConversionResults();
   void      setGain(adsGain_t gain);
@@ -141,10 +156,12 @@ protected:
 };
 
 // Derive from ADS1105 & override construction to set properties
-class Adafruit_ADS1115 : public Adafruit_ADS1015
+class ReclaimerLabs_ADS1115 : public ReclaimerLabs_ADS1015
 {
  public:
-  Adafruit_ADS1115(uint8_t i2cAddress = ADS1015_ADDRESS);
+  ReclaimerLabs_ADS1115(uint8_t i2cAddress = ADS1015_ADDRESS_GND);
 
  private:
 };
+
+#endif /* RECLAIMERLABS_ADS1X15_H */

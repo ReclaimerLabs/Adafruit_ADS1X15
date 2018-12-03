@@ -26,7 +26,7 @@
 
 #include <Wire.h>
 
-#include "Adafruit_ADS1015.h"
+#include "ReclaimerLabs_ADS1X15.h"
 
 /**************************************************************************/
 /*!
@@ -74,7 +74,7 @@ static void writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t value) {
 /**************************************************************************/
 static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
   Wire.beginTransmission(i2cAddress);
-  i2cwrite(ADS1015_REG_POINTER_CONVERT);
+  i2cwrite(reg);
   Wire.endTransmission();
   Wire.requestFrom(i2cAddress, (uint8_t)2);
   return ((i2cread() << 8) | i2cread());  
@@ -85,7 +85,7 @@ static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
     @brief  Instantiates a new ADS1015 class w/appropriate properties
 */
 /**************************************************************************/
-Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress) 
+ReclaimerLabs_ADS1015::ReclaimerLabs_ADS1015(uint8_t i2cAddress) 
 {
    m_i2cAddress = i2cAddress;
    m_conversionDelay = ADS1015_CONVERSIONDELAY;
@@ -98,7 +98,7 @@ Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress)
     @brief  Instantiates a new ADS1115 class w/appropriate properties
 */
 /**************************************************************************/
-Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
+ReclaimerLabs_ADS1115::ReclaimerLabs_ADS1115(uint8_t i2cAddress)
 {
    m_i2cAddress = i2cAddress;
    m_conversionDelay = ADS1115_CONVERSIONDELAY;
@@ -111,7 +111,7 @@ Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
     @brief  Sets up the HW (reads coefficients values, etc.)
 */
 /**************************************************************************/
-void Adafruit_ADS1015::begin() {
+void ReclaimerLabs_ADS1015::begin() {
   Wire.begin();
 }
 
@@ -120,7 +120,7 @@ void Adafruit_ADS1015::begin() {
     @brief  Sets the gain and input voltage range
 */
 /**************************************************************************/
-void Adafruit_ADS1015::setGain(adsGain_t gain)
+void ReclaimerLabs_ADS1015::setGain(adsGain_t gain)
 {
   m_gain = gain;
 }
@@ -130,7 +130,7 @@ void Adafruit_ADS1015::setGain(adsGain_t gain)
     @brief  Gets a gain and input voltage range
 */
 /**************************************************************************/
-adsGain_t Adafruit_ADS1015::getGain()
+adsGain_t ReclaimerLabs_ADS1015::getGain()
 {
   return m_gain;
 }
@@ -140,7 +140,7 @@ adsGain_t Adafruit_ADS1015::getGain()
     @brief  Gets a single-ended ADC reading from the specified channel
 */
 /**************************************************************************/
-uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
+uint16_t ReclaimerLabs_ADS1015::readADC_SingleEnded(uint8_t channel) {
   if (channel > 3)
   {
     return 0;
@@ -196,7 +196,7 @@ uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
             positive or negative.
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1015::readADC_Differential_0_1() {
+int16_t ReclaimerLabs_ADS1015::readADC_Differential_0_1() {
   // Start with default values
   uint16_t config = ADS1015_REG_CONFIG_CQUE_NONE    | // Disable the comparator (default val)
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
@@ -247,7 +247,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_0_1() {
             positive or negative.
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
+int16_t ReclaimerLabs_ADS1015::readADC_Differential_2_3() {
   // Start with default values
   uint16_t config = ADS1015_REG_CONFIG_CQUE_NONE    | // Disable the comparator (default val)
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
@@ -290,6 +290,61 @@ int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
   }
 }
 
+double ReclaimerLabs_ADS1015::readADC_Diff_0_1_mV() {
+    int16_t rawADC = this->readADC_Differential_0_1();
+    double return_val=0;
+    switch (this->m_gain) {
+        case(GAIN_TWOTHIRDS): // ADS1015_CONFIG_PGA_6_144V
+            return_val = (ADS1118_CONST_6_144V_LSB_mV * rawADC);
+            break;
+        case(GAIN_ONE):       // ADS1015_CONFIG_PGA_4_096V
+            return_val = (ADS1118_CONST_4_096V_LSB_mV * rawADC);
+            break;
+        case(GAIN_TWO):       // ADS1015_CONFIG_PGA_2_048V
+            return_val = (ADS1118_CONST_2_048V_LSB_mV * rawADC);
+            break;
+        case(GAIN_FOUR):      // ADS1015_CONFIG_PGA_1_024V
+            return_val = (ADS1118_CONST_1_024V_LSB_mV * rawADC);
+            break;
+        case(GAIN_EIGHT):     // ADS1015_CONFIG_PGA_0_512V
+            return_val = (ADS1118_CONST_0_512V_LSB_mV * rawADC);
+            break;
+        case(GAIN_SIXTEEN):   // ADS1015_CONFIG_PGA_0_256V
+            return_val = (ADS1118_CONST_0_256V_LSB_mV * rawADC);
+            break;
+    }
+    
+    return return_val;
+}
+
+double ReclaimerLabs_ADS1015::readADC_Diff_2_3_mV() {
+    int16_t rawADC = this->readADC_Differential_2_3();
+    double return_val=0;
+    switch (this->m_gain) {
+        case(GAIN_TWOTHIRDS): // ADS1015_CONFIG_PGA_6_144V
+            return_val = (ADS1118_CONST_6_144V_LSB_mV * rawADC);
+            break;
+        case(GAIN_ONE):       // ADS1015_CONFIG_PGA_4_096V
+            return_val = (ADS1118_CONST_4_096V_LSB_mV * rawADC);
+            break;
+        case(GAIN_TWO):       // ADS1015_CONFIG_PGA_2_048V
+            return_val = (ADS1118_CONST_2_048V_LSB_mV * rawADC);
+            break;
+        case(GAIN_FOUR):      // ADS1015_CONFIG_PGA_1_024V
+            return_val = (ADS1118_CONST_1_024V_LSB_mV * rawADC);
+            break;
+        case(GAIN_EIGHT):     // ADS1015_CONFIG_PGA_0_512V
+            return_val = (ADS1118_CONST_0_512V_LSB_mV * rawADC);
+            break;
+        case(GAIN_SIXTEEN):   // ADS1015_CONFIG_PGA_0_256V
+            return_val = (ADS1118_CONST_0_256V_LSB_mV * rawADC);
+            break;
+    }
+    
+    return return_val;
+}
+
+
 /**************************************************************************/
 /*!
     @brief  Sets up the comparator to operate in basic mode, causing the
@@ -299,7 +354,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
             This will also set the ADC in continuous conversion mode.
 */
 /**************************************************************************/
-void Adafruit_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t threshold)
+void ReclaimerLabs_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t threshold)
 {
   // Start with default values
   uint16_t config = ADS1015_REG_CONFIG_CQUE_1CONV   | // Comparator enabled and asserts on 1 match
@@ -345,7 +400,7 @@ void Adafruit_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t thre
             results without changing the config value.
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1015::getLastConversionResults()
+int16_t ReclaimerLabs_ADS1015::getLastConversionResults()
 {
   // Wait for the conversion to complete
   delay(m_conversionDelay);
